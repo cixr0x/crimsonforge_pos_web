@@ -96,6 +96,9 @@ function ProductCard({
         alignItems: { xs: 'center', sm: 'stretch' },
         gap: { xs: 2, sm: 0 },
         p: { xs: 1.5, sm: 0 },
+        width: '100%',
+        minWidth: 0,
+        overflow: 'hidden',
       }}
     >
       {activeImage ? (
@@ -139,8 +142,14 @@ function ProductCard({
       )}
       <Box sx={{ display: 'flex', flexDirection: 'column', flex: 1, width: '100%' }}>
         <CardContent sx={{ pb: { xs: 1, sm: 2 } }}>
-          <Stack direction="row" justifyContent="space-between" alignItems="flex-start" gap={1}>
-            <Typography component="h3" variant="h6" fontWeight={700} noWrap>
+          <Stack
+            direction="row"
+            justifyContent="space-between"
+            alignItems="flex-start"
+            gap={1}
+            sx={{ flexWrap: 'wrap', minWidth: 0 }}
+          >
+            <Typography component="h3" variant="h6" fontWeight={700}>
               {product.name}
             </Typography>
             <Chip size="small" label={`${product.available_qty} in stock`} color={outOfStock ? 'default' : 'success'} />
