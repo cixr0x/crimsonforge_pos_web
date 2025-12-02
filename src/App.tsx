@@ -16,6 +16,11 @@ import {
   DialogContent,
   DialogContentText,
   DialogTitle,
+  FormControl,
+  FormControlLabel,
+  FormLabel,
+  Radio,
+  RadioGroup,
   Snackbar,
   Stack,
   Toolbar,
@@ -31,6 +36,8 @@ type Product = {
   price: number;
   available_qty: number;
 };
+
+type PaymentType = 'card' | 'cash';
 
 const API_BASE = process.env.REACT_APP_API_BASE_URL || 'http://localhost:4000';
 const IMAGE_BASE = 'https://storage.googleapis.com/crimsonforge-bucket/pos/products';
@@ -149,7 +156,7 @@ function ProductCard({
             disabled={outOfStock || busy}
             onClick={() => onRegisterSale(product.product_id)}
           >
-            {busy ? 'Registering…' : 'Register sale'}
+            {busy ? 'Registrando…' : 'Registrar venta'}
           </Button>
         </CardActions>
       </Box>
@@ -169,6 +176,13 @@ function App() {
   });
   const [confirmProduct, setConfirmProduct] = useState<Product | null>(null);
   const [confirmImageIdx, setConfirmImageIdx] = useState(0);
+  const [paymentType, setPaymentType] = useState<PaymentType>('cash');
+
+  const resetConfirmation = () => {
+    setConfirmProduct(null);
+    setConfirmImageIdx(0);
+    setPaymentType('cash');
+  };
 
   const loadProducts = async () => {
     try {
@@ -197,27 +211,33 @@ function App() {
     if (!product) return;
     setConfirmProduct(product);
     setConfirmImageIdx(0);
+    setPaymentType('cash');
   };
 
   const confirmRegisterSale = async () => {
     if (!confirmProduct) return;
     const productId = confirmProduct.product_id;
-    setConfirmProduct(null);
+    const selectedPaymentType = paymentType;
+    resetConfirmation();
     try {
       setPostingId(productId);
       setError(null);
-      const response = await fetch(`${API_BASE}/api/products/${productId}/sales`, { method: 'POST' });
+      const response = await fetch(`${API_BASE}/api/products/${productId}/sales`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ paymentType: selectedPaymentType }),
+      });
       if (!response.ok) {
-        const { message } = await response.json().catch(() => ({ message: 'Failed to register sale' }));
+        const { message } = await response.json().catch(() => ({ message: 'Fallo el registro de la venta' }));
         throw new Error(message);
       }
-      setSnackbar({ open: true, message: 'Sale registered', severity: 'success' });
+      setSnackbar({ open: true, message: 'Venta registrada', severity: 'success' });
       await loadProducts();
     } catch (err) {
       console.error(err);
       setSnackbar({
         open: true,
-        message: err instanceof Error ? err.message : 'Unable to register sale.',
+        message: err instanceof Error ? err.message : 'No se pudo registrar la venta.',
         severity: 'error',
       });
     } finally {
@@ -276,11 +296,11 @@ function App() {
         )}
       </Container>
 
-      <Dialog open={Boolean(confirmProduct)} onClose={() => setConfirmProduct(null)}>
-        <DialogTitle>Register sale</DialogTitle>
+      <Dialog open={Boolean(confirmProduct)} onClose={resetConfirmation}>
+        <DialogTitle>Registrar venta</DialogTitle>
         <DialogContent>
           <DialogContentText>
-            Register a sale for "{confirmProduct?.name}"? This will reduce inventory by 1.
+            Registrar venta de "{confirmProduct?.name}"?
           </DialogContentText>
           {confirmProduct && (
             <Stack direction="row" gap={2} alignItems="center" mt={2}>
@@ -328,7 +348,7 @@ function App() {
                   {confirmProduct.name}
                 </Typography>
                 <Typography variant="body2" color="text.secondary">
-                  Current stock: {confirmProduct.available_qty}
+                  Stock: {confirmProduct.available_qty}
                 </Typography>
                 <Typography variant="body2" fontWeight={700}>
                   {new Intl.NumberFormat('en-US', { style: 'currency', currency: 'USD' }).format(
@@ -338,13 +358,26 @@ function App() {
               </Stack>
             </Stack>
           )}
+          <FormControl component="fieldset" sx={{ mt: 3 }}>
+            <FormLabel component="legend">Forma de pago</FormLabel>
+            <RadioGroup
+              row
+              name="payment-type"
+              value={paymentType}
+              onChange={(event) => setPaymentType(event.target.value as PaymentType)}
+            >
+              <FormControlLabel value="cash" control={<Radio />} label="Efectivo" />
+              <FormControlLabel value="card" control={<Radio />} label="Tarjeta" />
+              
+            </RadioGroup>
+          </FormControl>
         </DialogContent>
         <DialogActions>
-          <Button onClick={() => setConfirmProduct(null)} disabled={postingId !== null}>
+          <Button onClick={resetConfirmation} disabled={postingId !== null}>
             Cancel
           </Button>
           <Button variant="contained" onClick={confirmRegisterSale} disabled={postingId !== null}>
-            Confirm sale
+            Confirmar
           </Button>
         </DialogActions>
       </Dialog>
