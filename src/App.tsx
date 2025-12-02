@@ -97,8 +97,10 @@ function ProductCard({
         gap: { xs: 2, sm: 0 },
         p: { xs: 1.5, sm: 0 },
         width: '100%',
+        maxWidth: '100%',
         minWidth: 0,
         overflow: 'hidden',
+        boxSizing: 'border-box',
       }}
     >
       {activeImage ? (
@@ -149,10 +151,20 @@ function ProductCard({
             gap={1}
             sx={{ flexWrap: 'wrap', minWidth: 0 }}
           >
-            <Typography component="h3" variant="h6" fontWeight={700}>
+            <Typography
+              component="h3"
+              variant="h6"
+              fontWeight={700}
+              sx={{ minWidth: 0, flexGrow: 1, wordBreak: 'break-word' }}
+            >
               {product.name}
             </Typography>
-            <Chip size="small" label={`${product.available_qty} in stock`} color={outOfStock ? 'default' : 'success'} />
+            <Chip
+              size="small"
+              label={`${product.available_qty} in stock`}
+              color={outOfStock ? 'default' : 'success'}
+              sx={{ flexShrink: 0 }}
+            />
           </Stack>
           <Typography variant="h5" fontWeight={700} mt={1}>
             {priceLabel}
